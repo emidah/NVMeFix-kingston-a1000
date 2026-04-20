@@ -69,6 +69,7 @@ bool NVMeFixPlugin::PM::initActivePM(ControllerEntry& entry, const NVMe::nvme_id
 		if (!(ctrl->psd[state].flags & NVMe::NVME_PS_FLAGS_NON_OP_STATE))
 			op++;
 
+	entry.nstates = op + 1;
 	entry.powerStates = new IOPMPowerState[entry.nstates];
 	if (!entry.powerStates) {
 		SYSLOG(Log::PM, "Failed to allocate power state buffer");
