@@ -113,7 +113,8 @@ static constexpr struct pci_device_id nvme_id_table[] = {
 		NVME_QUIRK_NO_DEEPEST_PS |
 				NVME_QUIRK_IGNORE_DEV_SUBNQN, },
 	{ 0x2646, 0x5008,   /* Kingston SA1000M8240G */
-		NVME_QUIRK_NO_APST, },
+		NVME_QUIRK_NO_APST |
+				NVME_QUIRK_DELAY_BEFORE_CHK_RDY, },
 
 	/* Should be taken care of by IONVMeFamily */
 #if 0
