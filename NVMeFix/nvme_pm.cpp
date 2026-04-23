@@ -69,6 +69,7 @@ bool NVMeFixPlugin::PM::initActivePM(ControllerEntry& entry, const NVMe::nvme_id
 		if (!(ctrl->psd[state].flags & NVMe::NVME_PS_FLAGS_NON_OP_STATE))
 			op++;
 
+	entry.nstates = op + 1;
 	entry.powerStates = new IOPMPowerState[entry.nstates];
 	if (!entry.powerStates) {
 		SYSLOG(Log::PM, "Failed to allocate power state buffer");
@@ -230,6 +231,8 @@ bool NVMeFixPlugin::PM::solveSymbols(KernelPatcher& kp) {
 	bool ret =
 	plugin.kextFuncs.IONVMeController.activityTickle.routeVirtual(kp, idx,
 													"__ZTV16IONVMeController", 249, activityTickle);
+	ret &= plugin.kextFuncs.IONVMeController.setPowerState.routeVirtual(kp, idx,
+												 "__ZTV16IONVMeController", 255, setPowerState);
 
 	return ret;
 }
@@ -253,4 +256,22 @@ bool NVMeFixPlugin::PM::activityTickle(void* controller, unsigned long type, uns
 	}
 
 	return plugin.kextFuncs.IONVMeController.activityTickle(controller, type, stateNumber);
+}
+
+IOReturn NVMeFixPlugin::PM::setPowerState(void *controller, unsigned long powerStateOrdinal,
+										  IOService *whatDevice) {
+	auto &plugin = NVMeFixPlugin::globalPlugin();
+
+	ControllerEntry *entry {nullptr};
+	IOLockLock(plugin.lck);
+	entry = plugin.entryForController(static_cast<IOService *>(controller));
+	IOLockUnlock(plugin.lck);
+
+	if (entry && (entry->quirks & NVMe::NVME_QUIRK_DELAY_BEFORE_CHK_RDY)) {
+		DBGLOG(Log::PM, "Delaying setPowerState(%lu) by %u ms due to quirk",
+			   powerStateOrdinal, chkRdyDelayMs);
+		IOSleep(chkRdyDelayMs);
+	}
+
+	return plugin.kextFuncs.IONVMeController.setPowerState(controller, powerStateOrdinal, whatDevice);
 }

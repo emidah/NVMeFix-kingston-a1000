@@ -131,6 +131,7 @@ private:
 				"__ZN16IONVMeController13ReturnRequestEP16AppleNVMeRequest"
 			};
 			Func<bool,void*,unsigned long, unsigned long> activityTickle {};
+			Func<IOReturn,void*,unsigned long,IOService*> setPowerState {};
 			Func<void,void*,void*,int> FilterInterruptRequest {
 				"__ZN16IONVMeController22FilterInterruptRequestEP28IOFilterInterruptEventSource"
 			};
@@ -300,8 +301,10 @@ private:
 		bool solveSymbols(KernelPatcher&);
 
 		static constexpr unsigned idlePeriod {2}; /* seconds */
+		static constexpr unsigned chkRdyDelayMs {2300};
 
 		static bool activityTickle(void*,unsigned long,unsigned long);
+		static IOReturn setPowerState(void*,unsigned long,IOService*);
 
 		explicit PM(NVMeFixPlugin& plugin) : plugin(plugin) {}
 	private:
